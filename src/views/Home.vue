@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="home">
+    <div class="home" v-if="forecast">
       <div class="box">
         <div class="box__header">
           <h2>Location</h2>
@@ -8,11 +8,21 @@
         <div class="box__content">
           <div>
             <p class="space">The weather for:</p>
-            <p>{{forecast.timezone}}</p>
+            <p>{{city}}</p>
           </div>
+
           <div class="search">
-            <input type="text" name="search" id="search" placeholder="Find a city">
-            <button type="submit">Find</button>
+            <p class="find">Find a city</p>
+            <div class="search-box">
+              <input
+                v-model="location"
+                type="text"
+                name="search"
+                id="search"
+                placeholder="City, Country"
+              >
+              <button @click="updateLocation" type="submit">Find</button>
+            </div>
           </div>
         </div>
       </div>
@@ -38,7 +48,6 @@
           <p>{{forecast.daily.summary}}</p>
         </div>
       </div>
-      <pre>{{forecast}}</pre>
     </div>
   </section>
 </template>
@@ -60,7 +69,7 @@ export default {
   name: "home",
   data() {
     return {
-      forecast: {},
+      forecast: null,
       icons: {
         "clear-day": clearDay,
         "clear-night": clearNight,
@@ -72,13 +81,37 @@ export default {
         cloudy: cloudy,
         "partly-cloudy-day": partlyCloudyDay,
         "partly-cloudy-night": partlyCloudyNight
-      }
+      },
+      city: null,
+      location: "",
+      lat: "37.8267",
+      long: "-122.4233"
     };
   },
   mounted() {
-    API.getForecast().then(result => {
+    API.getForecast(this.lat, this.long).then(result => {
       this.forecast = result;
+      this.getPlace(result.latitude, result.longitude);
     });
+  },
+  methods: {
+    updateLocation() {
+      API.getCoords(this.location).then(result => {
+        console.log(result);
+        API.getForecast(
+          result.results[0].geometry.lat,
+          result.results[0].geometry.lng
+        ).then(result => {
+          this.forecast = result;
+          this.getPlace(result.latitude, result.longitude);
+        });
+      });
+    },
+    getPlace(lat, lgn) {
+      API.getCity(lat, lgn).then(result => {
+        this.city = result.results[0].components.city;
+      });
+    }
   }
 };
 </script>
@@ -132,6 +165,17 @@ export default {
 .search {
   margin-top: 4rem;
   display: flex;
+  flex-direction: column;
+}
+
+.find {
+  font-size: 0.8em;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.search-box {
+  display: flex;
   align-items: center;
 }
 
@@ -143,6 +187,7 @@ export default {
   background: #78c2ad;
   border-bottom: 2px solid white;
   outline: none;
+  color: white;
 }
 
 .search input::placeholder {
