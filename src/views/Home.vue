@@ -89,14 +89,25 @@ export default {
     };
   },
   mounted() {
-    this.$getLocation().then(coords => {
-      this.lat = coords.lat;
-      this.long = coords.lng;
-      API.getForecast(this.lat, this.long).then(result => {
-        this.forecast = result;
-        this.getPlace(result.latitude, result.longitude);
+    this.$getLocation()
+      .then(coords => {
+        if (coords) {
+          this.lat = coords.lat;
+          this.long = coords.lng;
+        }
+      })
+      .then(() => {
+        API.getForecast(this.lat, this.long).then(result => {
+          this.forecast = result;
+          this.getPlace(result.latitude, result.longitude);
+        });
+      })
+      .catch(err => {
+        API.getForecast(this.lat, this.long).then(result => {
+          this.forecast = result;
+          this.getPlace(result.latitude, result.longitude);
+        });
       });
-    });
   },
   methods: {
     updateLocation() {
