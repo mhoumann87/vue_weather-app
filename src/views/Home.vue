@@ -89,9 +89,13 @@ export default {
     };
   },
   mounted() {
-    API.getForecast(this.lat, this.long).then(result => {
-      this.forecast = result;
-      this.getPlace(result.latitude, result.longitude);
+    this.$getLocation().then(coords => {
+      this.lat = coords.lat;
+      this.long = coords.lng;
+      API.getForecast(this.lat, this.long).then(result => {
+        this.forecast = result;
+        this.getPlace(result.latitude, result.longitude);
+      });
     });
   },
   methods: {
@@ -109,7 +113,11 @@ export default {
     },
     getPlace(lat, lgn) {
       API.getCity(lat, lgn).then(result => {
-        this.city = result.results[0].components.city;
+        if (result.results[0].components.city) {
+          this.city = result.results[0].components.city;
+        } else {
+          this.city = result.results[0].components.village;
+        }
       });
     }
   }
